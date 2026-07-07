@@ -17,10 +17,20 @@ export type SceneInput =
   | { kind: "text"; label: string; fragment: string };
 
 const SCENE_PHOTO_INSTRUCTIONS = (label: string) =>
-  `Reference image 3 is a real photo of the exact real-world location where this must be shot — labeled "${label}" by the user. This is a real place, not a style description: reproduce its exact architecture, furniture, mirror, and surfaces as precisely as possible (the lighting itself is governed separately below — it may differ from the reference photo's original lighting). The output must look like it was actually taken inside this same real environment, from a natural position within it (the exact camera position and framing are defined by the shot description below).`;
+  `Reference image 3 is a real photo of the exact real-world location where this must be shot — labeled "${label}" by the user. This is a real place, not a style description: reproduce its exact architecture, furniture, mirror, and surfaces as precisely as possible (the lighting itself is governed separately below — it may differ from the reference photo's original lighting). Study this reference photo carefully and read from it: the direction and quality of its light, the color of its walls/surfaces, the room's depth and perspective, and where the mirror sits — then place the person into that same space consistently with all of it. The output must look like it was actually taken inside this same real environment, from a natural position within it (the exact camera position and framing are defined by the shot description below).`;
 
 const SCENE_TEXT_INSTRUCTIONS = (label: string, fragment: string) =>
   `Location: the photo is taken in the following real-world setting — "${label}". ${fragment} There is no reference photo for this location: build a believable, realistic version of this kind of place, with coherent architecture, props and depth. The output must look like a genuine photo actually taken inside such a place (the exact camera position and framing are defined by the shot description below).`;
+
+// The #1 realism fix: make the person genuinely PART of the scene (lit by it,
+// casting real shadows, at the right scale and distance) instead of looking
+// pasted/edited on top of the background.
+const INTEGRATION_INSTRUCTIONS = (sceneRef: string) =>
+  `Integration into the scene — this is critical for realism. The person must look like she is genuinely standing inside ${sceneRef}, physically present in that space, NOT cut out and pasted onto a background and NOT a composite/edited montage. To achieve this:
+- Lighting on her body, face and clothes must come from the actual light sources of the location, matching their direction, color temperature and softness. Her skin and outfit pick up the ambient color of the room. There must be no lighting mismatch between her and the background.
+- She casts real, physically correct shadows: soft contact shadows where her feet meet the floor, and shadows on nearby surfaces consistent with the scene's light direction. Her reflection (in a mirror shot) and any shadow must be grounded and believable.
+- Correct scale and depth: she is a real woman about 1.67 m tall, so size her correctly relative to the furniture, doorways, mirror and ceiling height in the scene — she must not look oversized or tiny. She stands at a natural distance INSIDE the room with real space and depth around and behind her (floor visible beneath her, room extending behind), not flattened against the mirror or wall.
+- Matching camera perspective, focal length, depth of field, grain and white balance between her and the environment, so both clearly belong to the same single photograph.`;
 
 const LIGHTING_INSTRUCTIONS = (lightingFragment: string, sceneRef: string) =>
   `Lighting: ${lightingFragment} This lighting applies throughout ${sceneRef}, overriding any default lighting of the location — keep the location's architecture and furniture, but light it as described here.`;
@@ -157,6 +167,7 @@ export function buildLookPrompt({
     sceneInstruction,
     ENVIRONMENT_INSTRUCTIONS(environmentFragment, sceneRef),
     LIGHTING_INSTRUCTIONS(lightingFragment, sceneRef),
+    INTEGRATION_INSTRUCTIONS(sceneRef),
     SHOT_INSTRUCTIONS(shotFragment),
     POSE_INSTRUCTIONS(poseFragment),
     HAND_INSTRUCTIONS(handFragment),
@@ -170,6 +181,6 @@ export function buildLookPrompt({
     `Combine all references into a single photo of the person from references 1 and 2, wearing all of the above garments together as a complete, coherent outfit, inside ${sceneRef}.`,
     STYLE_INSTRUCTIONS(sceneRef),
     "Output a vertical portrait-orientation photo, full body or 3/4 framing so the outfit is fully visible.",
-    "FINAL CHECK before rendering: the face must be the exact same recognizable person from reference image 1, and the body must have the exact same real proportions, symmetry and build from reference image 2. If the outfit, pose, angle or scene would require altering the face or body proportions, keep the face and body faithful and adapt everything else around them.",
+    "FINAL CHECK before rendering: (1) the face must be the exact same recognizable person from reference image 1; (2) the body must have the exact same real proportions and 1.67 m height from reference image 2, correctly scaled to the room and NOT enlarged by being close to the mirror; (3) she must look genuinely present in the scene — lit by the room, casting real shadows, standing back at a natural distance with floor and depth around her — never like a cut-out pasted onto the background. If any instruction conflicts with these, keep the person faithful and realistically integrated and adapt everything else.",
   ].join("\n\n");
 }
