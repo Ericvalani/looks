@@ -1,0 +1,37 @@
+# Render blueprint — deploys the Next.js app as a long-lived web service
+# (container model, so the ~3 min image generation is not cut off by a
+# serverless function timeout). Secrets are marked sync:false so Render prompts
+# for them in the dashboard and they are never committed to git.
+services:
+  - type: web
+    name: looks-app
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /login
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: APP_GATE_PASSWORD
+        sync: false
+      - key: APP_GATE_SECRET
+        sync: false
+      - key: ERIC_EMAIL
+        sync: false
+      - key: ERIC_PASSWORD
+        sync: false
+      - key: MATEUS_EMAIL
+        sync: false
+      - key: MATEUS_PASSWORD
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false

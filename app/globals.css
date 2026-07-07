@@ -1,26 +1,266 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #050505;
+  --foreground: #f5f5f5;
+  --muted: rgba(245, 245, 245, 0.55);
+  --line: rgba(255, 255, 255, 0.14);
+  --line-strong: rgba(255, 255, 255, 0.32);
+  --glass-bg: rgba(255, 255, 255, 0.09);
+  --glass-bg-strong: rgba(255, 255, 255, 0.16);
+  --glass-border: rgba(255, 255, 255, 0.22);
+  --glass-blur: 24px;
+  --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  --radius-card: 20px;
+  --radius-chip: 999px;
+  --accent-eric: #9db4ff;
+  --accent-mateus: #ffd39d;
+  --accent-blue: #3b82f6;
+  --accent-blue-glow: #60a5fa;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-glass: var(--glass-bg);
+  --color-glass-strong: var(--glass-bg-strong);
+  --color-accent-eric: var(--accent-eric);
+  --color-accent-mateus: var(--accent-mateus);
+  --radius-card: var(--radius-card);
+  --radius-chip: var(--radius-chip);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  border-color: var(--line);
+}
+
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
+  /* Soft ambient color glows so the glass cards have something to catch —
+     flat black behind a translucent card just reads as "no effect". */
+  background-image:
+    radial-gradient(900px 560px at 10% -10%, rgba(130, 150, 255, 0.12), transparent 60%),
+    radial-gradient(760px 560px at 95% 5%, rgba(255, 175, 120, 0.09), transparent 60%),
+    radial-gradient(1000px 700px at 50% 115%, rgba(170, 130, 255, 0.08), transparent 60%);
+  background-color: var(--background);
+  background-attachment: fixed;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Glassmorphism card: translucent fill + top sheen + blur + visible border + depth */
+.glass-card {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 45%);
+  background-color: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  border-radius: var(--radius-card);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-chip {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 45%);
+  background-color: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  border-radius: var(--radius-chip);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.hairline {
+  border: 1px solid var(--line);
+}
+
+/* Grouped "step" block: a soft, barely-there panel that gathers a few related
+   sections together so the long form reads as 4 stages instead of one wall. */
+.step-block {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0) 40%);
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Numbered badge that anchors each step header. */
+.step-index {
+  border: 1px solid var(--line-strong);
+  background-color: rgba(255, 255, 255, 0.04);
+}
+.step-block:focus-within .step-index,
+.step-block--done .step-index {
+  border-color: rgba(96, 165, 250, 0.6);
+  background-color: rgba(96, 165, 250, 0.12);
+  color: var(--accent-blue-glow);
+}
+
+/* Selected chip / thumbnail: vivid outline + a soft matching glow so the
+   current choice reads at a glance instead of a thin 1px line. */
+.selected-ring {
+  border-color: var(--accent-blue) !important;
+  box-shadow: 0 0 0 1px var(--accent-blue), 0 6px 22px rgba(59, 130, 246, 0.28);
+}
+
+.hairline-t {
+  border-top: 1px solid var(--line);
+}
+
+.hairline-b {
+  border-bottom: 1px solid var(--line);
+}
+
+/* thin dashed target for empty body-picker hotspots */
+.hotspot-empty {
+  border: 1.5px dashed var(--line-strong);
+}
+
+::selection {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+input,
+textarea,
+button {
+  font-family: inherit;
+}
+
+/* iOS safe-area helpers for the sticky bottom bar / bottom sheets */
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+}
+
+/* ---------------------------------------------------------------------------
+   Entrance: "glow horizon" intro overlay (plays on page load / reload)
+--------------------------------------------------------------------------- */
+@keyframes horizon-line {
+  0% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  60% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 0;
+  }
+}
+
+@keyframes horizon-bloom {
+  0% {
+    transform: translate(-50%, 0) scale(0.2);
+    opacity: 0;
+  }
+  35% {
+    opacity: 0.9;
+  }
+  70% {
+    transform: translate(-50%, 0) scale(1);
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate(-50%, 0) scale(1.35);
+    opacity: 0;
+  }
+}
+
+@keyframes horizon-fade-out {
+  0%,
+  58% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+.intro-overlay {
+  animation: horizon-fade-out 2.1s ease-in forwards;
+}
+.intro-line {
+  animation: horizon-line 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.intro-bloom {
+  animation: horizon-bloom 2.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Content rise-in, used with per-item delay */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-rise {
+  opacity: 0;
+  animation: rise-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-overlay,
+  .intro-line,
+  .intro-bloom,
+  .animate-rise {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  .animate-rise {
+    opacity: 1;
+  }
+}
+
+/* Letter-roll hover, used on the floating menu labels */
+.lr-char {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  height: 1em;
+  line-height: 1;
+  vertical-align: bottom;
+}
+.lr-top,
+.lr-bottom {
+  display: block;
+  transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.lr-bottom {
+  position: absolute;
+  top: 100%;
+  left: 0;
+}
+.lr-group:hover .lr-top,
+.lr-group:hover .lr-bottom {
+  transform: translateY(-100%);
+}
+
+/* Soft pulsing glow for the result frame while a look is generating */
+@keyframes frame-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px var(--glass-border), 0 0 30px rgba(96, 165, 250, 0.05);
+  }
+  50% {
+    box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.35), 0 0 55px rgba(96, 165, 250, 0.18);
+  }
+}
+.frame-breathe {
+  animation: frame-breathe 3.4s ease-in-out infinite;
 }
